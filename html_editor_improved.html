@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Editor with Live Preview</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 30px);
+        }
+
+        .preview-area,
+        .editor-area {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .preview-area {
+            border-right: 2px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .preview {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .editor,
+        .code-editor {
+            width: 100%;
+            height: 20%;
+            font-family: monospace;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .upload-area {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .toolbar button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        .toolbar button:hover {
+            background-color: #2980b9;
+        }
+
+        .popup {
+            position: absolute;
+            display: none;
+            padding: 5px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .popup button {
+            margin-right: 5px;
+            padding: 5px;
+            border: none;
+            background-color: #fff;
+            color: #3498db;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #2980b9;
+            color: white;
+        }
+
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .help a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .help a:hover {
+            text-decoration: underline;
+        }
+
+        .help-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .help-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .help-content h2 {
+            margin-top: 0;
+        }
+
+        .help-content button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .help-content button:hover {
+            background-color: #2980b9;
+        }
+
+        body.dark-mode {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+
+        .editor,
+        .code-editor,
+        .toolbar button {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .preview-area {
+            border-right: 2px solid #34495e;
+        }
+
+        .popup {
+            background-color: #2980b9;
+        }
+
+        .popup button {
+            background-color: #34495e;
+            color: #ecf0f1;
+        }
+         /* Fullscreen and Simulation Panel Styling */
+         .download-pdf-btn {
+            position: absolute;
+            top: 10px;
+            right: 170px;
+            z-index: 1000;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .simulation-panel {
+            position: absolute;
+            bottom: 10px;
+            right: 50%;
+            z-index: 1000;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .simulation-panel button {
+            background-color: #fff;
+            color: #3498db;
+            padding: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .simulation-panel button:hover {
+            background-color: #2980b9;
+            color: white;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="help">
+            <a href="#" onclick="toggleHelp()">Help</a>
+        </div>
+    </header>
+    <!-- Fullscreen & PDF Download Button -->
+    <button class="fullscreen-btn" onclick="togglePreviewFullScreen()">Full Screen Preview</button>
+    <button class="download-pdf-btn" onclick="downloadPDF()">Download as PDF</button>
+
+    <!-- Simulation Panel for different screen sizes -->
+    <div class="simulation-panel">
+        <button onclick="setPreviewSize('mobile')">Mobile</button>
+        <button onclick="setPreviewSize('tablet')">Tablet</button>
+        <button onclick="setPreviewSize('desktop')">Desktop</button>
+    </div>
+    <div class="container">
+        <div class="preview-area">
+            <iframe id="preview" class="preview" aria-label="Live Preview"></iframe>
+        </div>
+        <div class="editor-area">
+            <textarea id="editor" class="editor" placeholder="Type your HTML code here..." aria-label="HTML Editor"></textarea>
+
+            <div class="code-section">
+                <textarea id="cssEditor" class="code-editor" placeholder="Paste or edit your CSS here..."
+                    aria-label="CSS Editor"></textarea>
+                <textarea id="jsEditor" class="code-editor" placeholder="Paste or edit your JavaScript here..."
+                    aria-label="JavaScript Editor"></textarea>
+            </div>
+
+            <div class="upload-area">
+                <div>
+                    <label for="cssUpload">Upload CSS:</label>
+                    <input type="file" id="cssUpload" accept=".css">
+                </div>
+                <div>
+                    <label for="jsUpload">Upload JavaScript:</label>
+                    <input type="file" id="jsUpload" accept=".js">
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <button onclick="wrapText('<b>', '</b>')" aria-label="Bold">Bold</button>
+                <button onclick="wrapText('<i>', '</i>')" aria-label="Italic">Italic</button>
+                <button onclick="wrapText('<u>', '</u>')" aria-label="Underline">Underline</button>
+                <button onclick="wrapText('<h2>', '</h2>')" aria-label="H2">H2</button>
+                <button onclick="wrapText('<h3>', '</h3>')" aria-label="H3">H3</button>
+                <button onclick="wrapText('<h4>', '</h4>')" aria-label="H4">H4</button>
+                <button onclick="wrapText('<p>', '</p>')" aria-label="Paragraph">Paragraph</button>
+                <button onclick="wrapText('<ul>', '</ul>')" aria-label="Unordered List">UL</button>
+                <button onclick="wrapText('<li>', '</li>')" aria-label="List Item">LI</button>
+                <button onclick="wrapText('<strong>', '</strong>')" aria-label="Strong">Strong</button>
+                <button onclick="undo()" aria-label="Undo">Undo</button>
+                <button onclick="redo()" aria-label="Redo">Redo</button>
+                <button onclick="toggleDarkMode()" aria-label="Toggle Dark Mode">Dark Mode</button>
+                <button onclick="formatHTML()" aria-label="Format HTML">Format HTML</button>
+            </div>
+            <div id="popup" class="popup" aria-label="Text Formatting Options">
+                <button onclick="wrapText('<b>', '</b>')" aria-label="Bold">Bold</button>
+                <button onclick="wrapText('<i>', '</i>')" aria-label="Italic">Italic</button>
+                <button onclick="wrapText('<u>', '</u>')" aria-label="Underline">Underline</button>
+                <button onclick="wrapText('<h2>', '</h2>')" aria-label="H2">H2</button>
+                <button onclick="wrapText('<h3>', '</h3>')" aria-label="H3">H3</button>
+                <button onclick="wrapText('<h4>', '</h4>')" aria-label="H4">H4</button>
+                <button onclick="wrapText('<p>', '</p>')" aria-label="Paragraph">Paragraph</button>
+                <button onclick="wrapText('<ul>', '</ul>')" aria-label="Unordered List">UL</button>
+                <button onclick="wrapText('<li>', '</li>')" aria-label="List Item">LI</button>
+                <button onclick="wrapText('<strong>', '</strong>')" aria-label="Strong">Strong</button>
+            </div>
+        </div>
+    </div>
+    <div id="helpOverlay" class="help-overlay">
+        <div class="help-content">
+            <h2>User Guide</h2>
+            <p>Welcome to the Text Editor with Live Preview. Here are some tips to help you get started:</p>
+            <ul>
+                <li>Type your HTML, CSS, or JavaScript code in the respective text areas.</li>
+                <li>Click on the formatting buttons to apply HTML tags to your text.</li>
+                <li>Upload CSS and JavaScript files to include them in your preview.</li>
+                <li>Use the 'Format HTML' button to automatically beautify your HTML code.</li>
+                <li>Toggle between light and dark mode for a comfortable editing experience.</li>
+                <li>Preview your code live in the frame on the left side of the screen.</li>
+            </ul>
+            <button onclick="toggleHelp()">Close</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <script>
+             // Fullscreen Preview
+        function togglePreviewFullScreen() {
+            const preview = document.getElementById("preview");
+            if (!document.fullscreenElement) {
+                preview.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Screen Size Simulation (Preview Window)
+        function setPreviewSize(size) {
+            const preview = document.getElementById("preview");
+            if (size === 'mobile') {
+                preview.style.width = "375px";
+                preview.style.height = "667px";
+            } else if (size === 'tablet') {
+                preview.style.width = "768px";
+                preview.style.height = "1024px";
+            } else if (size === 'desktop') {
+                preview.style.width = "100%";
+                preview.style.height = "100%";
+            }
+        }
+
+        // Download as PDF (Print Preview Window)
+        function downloadPDF() {
+            const preview = document.getElementById("preview");
+            const previewContent = preview.contentDocument.documentElement.outerHTML;
+            const newWindow = window.open("", "_blank");
+            newWindow.document.write(previewContent);
+            newWindow.document.close();
+            newWindow.focus();
+            newWindow.print();
+            newWindow.onafterprint = () => newWindow.close();
+        }
+
+        function updatePreview() {
+            const html = document.getElementById("editor").value;
+            const css = document.getElementById("cssEditor").value;
+            const js = document.getElementById("jsEditor").value;
+
+            const preview = document.getElementById("preview").contentWindow.document;
+            preview.open();
+            preview.write(
+                `${html}
+                <style>${css}</style>
+                <script>${js}<\/script>`
+            );
+            preview.close();
+        }
+
+        document.getElementById("editor").addEventListener("input", updatePreview);
+        document.getElementById("cssEditor").addEventListener("input", updatePreview);
+        document.getElementById("jsEditor").addEventListener("input", updatePreview);
+
+        document.getElementById("cssUpload").addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById("cssEditor").value = e.target.result;
+                updatePreview();
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById("jsUpload").addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById("jsEditor").value = e.target.result;
+                updatePreview();
+            };
+            reader.readAsText(file);
+        });
+
+        function wrapText(openTag, closeTag) {
+            const textarea = document.getElementById("editor");
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            const newText = openTag + selectedText + closeTag;
+            textarea.setRangeText(newText);
+            textarea.focus();
+            updatePreview();
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        function undo() {
+            document.execCommand('undo');
+        }
+
+        function redo() {
+            document.execCommand('redo');
+        }
+
+        function toggleHelp() {
+            const helpOverlay = document.getElementById("helpOverlay");
+            helpOverlay.style.display = helpOverlay.style.display === "flex" ? "none" : "flex";
+        }
+
+        function formatHTML() {
+            const editor = document.getElementById("editor");
+            editor.value = html_beautify(editor.value, { indent_size: 2, space_in_empty_paren: true });
+            updatePreview();
+        }
+    </script>
+</body>
+
+</html>
