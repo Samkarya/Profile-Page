@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract URLs from Sitemap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .url-list {
+            margin-top: 20px;
+            list-style: none;
+            padding: 0;
+        }
+        .url-list li {
+            margin: 5px 0;
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Extract URLs from Sitemap</h1>
+        <input type="text" id="sitemapUrl" placeholder="Enter sitemap URL">
+        <textarea id="sitemapText" placeholder="Or paste sitemap XML text here" rows="10"></textarea>
+        <button onclick="extractUrls()">Extract URLs</button>
+        <ul id="urlList" class="url-list"></ul>
+        <button id="copyBtn" onclick="copyToClipboard()" disabled>Copy to Clipboard</button>
+        <button id="saveBtn" onclick="saveAsTxt()" disabled>Save as TXT</button>
+    </div>
+
+    <script>
+        function extractUrls() {
+            const sitemapUrl = document.getElementById('sitemapUrl').value;
+            const sitemapText = document.getElementById('sitemapText').value;
+
+            if (sitemapUrl) {
+                fetch(sitemapUrl)
+                    .then(response => response.text())
+                    .then(data => parseSitemap(data));
+            } else if (sitemapText) {
+                parseSitemap(sitemapText);
+            } else {
+                alert('Please provide a sitemap URL or paste sitemap XML text.');
+            }
+        }
+
+        function parseSitemap(sitemap) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(sitemap, 'text/xml');
+            const urls = xmlDoc.getElementsByTagName('loc');
+            const urlList = document.getElementById('urlList');
+            urlList.innerHTML = '';
+
+            for (let i = 0; i < urls.length; i++) {
+                const li = document.createElement('li');
+                li.textContent = urls[i].textContent;
+                urlList.appendChild(li);
+            }
+
+            document.getElementById('copyBtn').disabled = urls.length === 0;
+            document.getElementById('saveBtn').disabled = urls.length === 0;
+        }
+
+        function copyToClipboard() {
+            const urlList = document.getElementById('urlList');
+            const urls = [...urlList.children].map(li => li.textContent).join('\n');
+            navigator.clipboard.writeText(urls).then(() => {
+                alert('URLs copied to clipboard');
+            });
+        }
+
+        function saveAsTxt() {
+            const urlList = document.getElementById('urlList');
+            const urls = [...urlList.children].map(li => li.textContent).join('\n');
+            const blob = new Blob([urls], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'sitemap_urls.txt';
+            link.click();
+        }
+    </script>
+
+</body>
+</html>
