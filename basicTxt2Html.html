@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to HTML Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #editor {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 300px;
+        }
+        #toolbar {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-right: 5px;
+        }
+        #output {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <button onclick="execCmd('bold')">Bold</button>
+        <button onclick="execCmd('italic')">Italic</button>
+        <button onclick="execCmd('underline')">Underline</button>
+        <button onclick="execCmd('insertOrderedList')">OL</button>
+        <button onclick="execCmd('insertUnorderedList')">UL</button>
+        <button onclick="execCmd('justifyLeft')">Left</button>
+        <button onclick="execCmd('justifyCenter')">Center</button>
+        <button onclick="execCmd('justifyRight')">Right</button>
+        <button onclick="execCmd('insertHorizontalRule')">HR</button>
+        <select onchange="execCmd('formatBlock', this.value)">
+            <option value="">Heading</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+            <option value="h4">H4</option>
+            <option value="h5">H5</option>
+            <option value="h6">H6</option>
+        </select>
+        <button onclick="createLink()">Link</button>
+        <button onclick="insertImage()">Image</button>
+        <button onclick="execCmd('removeFormat')">Remove Format</button>
+    </div>
+        <div id="find-replace">
+        <input type="text" id="findText" placeholder="Find">
+        <input type="text" id="replaceText" placeholder="Replace">
+        <button onclick="findAndReplace()">Replace</button>
+    </div>
+    <div id="editor" contenteditable="true" oninput="updateHtml()"></div>
+
+    <h2>HTML Output:</h2>
+    <textarea id="output" rows="10" readonly></textarea>
+    <button onclick="copyHtml()">Copy HTML</button>
+
+
+
+    <script>
+        // Load saved content from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedContent = localStorage.getItem('editorContent');
+            if (savedContent) {
+                document.getElementById('editor').innerHTML = savedContent;
+                updateHtml();
+            }
+        });
+
+        // Save content to localStorage
+        function updateHtml() {
+            const editorContent = document.getElementById('editor').innerHTML;
+            document.getElementById('output').value = editorContent;
+            localStorage.setItem('editorContent', editorContent);
+        }
+
+        // Copy HTML output
+        function copyHtml() {
+            const outputTextarea = document.getElementById('output');
+            outputTextarea.select();
+            document.execCommand('copy');
+            alert('HTML copied to clipboard!');
+        }
+
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+        }
+
+        function createLink() {
+            const url = prompt('Enter the link URL:');
+            execCmd('createLink', url);
+        }
+
+        function insertImage() {
+            const url = prompt('Enter the image URL:');
+            execCmd('insertImage', url);
+        }
+
+        function findAndReplace() {
+            const findText = document.getElementById('findText').value;
+            const replaceText = document.getElementById('replaceText').value;
+            const editor = document.getElementById('editor');
+            const content = editor.innerHTML;
+            
+            const regex = new RegExp(findText, 'g');
+            const newContent = content.replace(regex, replaceText);
+            
+            editor.innerHTML = newContent;
+            updateHtml();
+        }
+    </script>
+</body>
+</html>
